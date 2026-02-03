@@ -13,10 +13,10 @@
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#0a0e1a">
 
-    <!-- Open Graph / Social Media Preview -->
-    <meta property="og:title" content="Devoted Dividend's Dividend Portfolio">
-    <meta property="og:description" content="View Devoted Dividend Investors Dividend Portfolio In Real Time!.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/benjiesiegel1414/devoted-dividend/main/media1.png">
+    <!-- Open Graph / Facebook, LinkedIn, Discord, WhatsApp, etc. -->
+    <meta property="og:title" content="Devoted Dividend's Portfolio Dashboard">
+    <meta property="og:description" content="Real-time dividend income tracker • Annual, monthly, and weekly estimates • Current holdings from Google Sheets. Updated frequently. For entertainment only.">
+    <meta property="og:image" content="https://i.postimg.cc/8JC3KBhJ/social-card.png">
     <meta property="og:url" content="https://devoteddividends.com">
     <meta property="og:type" content="website">
     <meta property="og:image:width" content="1200">
@@ -26,12 +26,11 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Devoted Dividend's Portfolio Dashboard">
     <meta name="twitter:description" content="Live dividend tracker • Holdings & income estimates • Powered by Google Sheets">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/benjiesiegel1414/devoted-dividend/main/media1.png">
+    <meta name="twitter:image" content="https://i.postimg.cc/8JC3KBhJ/social-card.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Crimson+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
-
     <style>
         :root {
             --bg-primary: #0a0e1a;
@@ -731,7 +730,7 @@
         <!-- Holdings Section -->
         <section class="holdings-section">
             <div class="section-header">
-                <h2 class="section-title">Current Holdings 👇</h2>
+                <h2 class="section-title">Current Holdings</h2>
                 <div class="filters">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="high">High Yield</button>
@@ -831,11 +830,25 @@
         </div>
 
         <!-- Footer -->
-        <footer>
-            <p>Dividend Portfolio Dashboard • Last Updated: <span id="last-update"></span></p>
-            <p style="margin-top: 0.5rem; font-size: 0.75rem;">Data is for informational purposes only. Not financial advice.</p>
-        </footer>
-    </div>
+<!-- Footer -->
+<footer style="text-align: center; padding: 2rem 0; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.875rem;">
+    <p style="margin-bottom: 1rem;">
+        <a href="/terms.html" style="color: var(--text-secondary); margin: 0 1rem; text-decoration: none;">Terms of Use</a> •
+        <a href="/privacy.html" style="color: var(--text-secondary); margin: 0 1rem; text-decoration: none;">Privacy Policy</a> •
+        <a href="mailto:Business@TopDividendETFs.com" style="color: var(--text-secondary); margin: 0 1rem; text-decoration: none;">Contact</a>
+    </p>
+
+    <p style="font-weight: 600; color: white; margin: 0.5rem 0;">
+        NOTHING ON DEVOTEDDIVIDEND.COM IS FINANCIAL ADVICE & I AM NOT A FINANCIAL ADVISOR
+    </p>
+
+    <p style="margin-top: 0.5rem;">
+        Dividend Portfolio Dashboard • Last Updated: <span id="last-update"></span>
+    </p>
+</footer>
+
+
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
