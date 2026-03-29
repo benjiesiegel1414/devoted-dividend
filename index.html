@@ -73,6 +73,7 @@
             overflow-x: hidden;
             position: relative;
             overscroll-behavior-y: none;
+            padding-bottom: 110px; /* Space for sticky banner */
         }
 
         /* Animated Background Grid */
@@ -175,6 +176,116 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-5px); }
         }
+
+        /* === STICKY YOUTUBE BANNER STYLES === */
+        .sticky-yt-ad {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9000;
+            background: linear-gradient(90deg, #0a0e1a 0%, #0d1a0f 50%, #0a0e1a 100%);
+            border-top: 2px solid var(--accent-primary);
+            box-shadow: 0 -4px 40px rgba(0, 255, 136, 0.25);
+            transform: translateY(100%);
+            animation: slideUpBar 0.6s cubic-bezier(0.22, 1, 0.36, 1) 3s forwards;
+        }
+        @keyframes slideUpBar { to { transform: translateY(0); } }
+
+        .sticky-yt-ad-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+        .sticky-yt-left { display: flex; align-items: center; gap: 1rem; flex: 1; }
+
+        .yt-play-icon {
+            width: 44px;
+            height: 44px;
+            background: #ff0000;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(255, 0, 0, 0.5);
+        }
+        .yt-play-icon svg { width: 20px; height: 20px; fill: white; }
+
+        .sticky-yt-text .headline { 
+            font-family: 'Crimson Pro', serif; 
+            font-size: 1.15rem; 
+            font-weight: 700; 
+            color: white; 
+            line-height: 1.2; 
+        }
+        .sticky-yt-text .sub { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-top: 1px; 
+        }
+
+        .sticky-yt-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.4rem;
+            background: var(--accent-primary);
+            color: #0a0e1a;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4);
+        }
+        .sticky-yt-cta:hover { 
+            background: #00e077; 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5); 
+        }
+
+        .sticky-yt-dismiss { 
+            background: none; 
+            border: none; 
+            color: var(--text-muted); 
+            font-size: 1.3rem; 
+            cursor: pointer; 
+            padding: 4px 8px; 
+            line-height: 1; 
+            flex-shrink: 0; 
+            transition: color 0.2s ease; 
+        }
+        .sticky-yt-dismiss:hover { color: var(--accent-primary); }
+
+        .live-dot { 
+            display: inline-block; 
+            width: 8px; 
+            height: 8px; 
+            background: #ff0000; 
+            border-radius: 50%; 
+            margin-right: 4px; 
+            animation: pulseDot 1.5s ease-in-out infinite; 
+        }
+        @keyframes pulseDot { 
+            0%, 100% { opacity: 1; transform: scale(1); } 
+            50% { opacity: 0.4; transform: scale(0.7); } 
+        }
+
+        @media (max-width: 900px) { 
+            .sticky-yt-text .sub { display: none; } 
+        }
+        @media (max-width: 600px) { 
+            .sticky-yt-ad-inner { padding: 0.6rem 1rem; } 
+            .sticky-yt-text .headline { font-size: 0.95rem; } 
+        }
+        /* === END STICKY BANNER STYLES === */
 
         /* Banner Slots */
         .banner-slot {
@@ -945,6 +1056,26 @@ Disclaimer: DevotedDividend.com is for educational purposes only. Data and infor
         </footer>
     </div>
 
+    <!-- STICKY YOUTUBE BANNER -->
+    <div class="sticky-yt-ad" id="sticky-yt-bar">
+        <div class="sticky-yt-ad-inner">
+            <div class="sticky-yt-left">
+                <div class="yt-play-icon">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div class="sticky-yt-text">
+                    <div class="headline"><span class="live-dot"></span>Want to start dividend investing? WATCH my <strong>FREE beginner guide</strong></div>
+                    <div class="sub">youtube.com/@DevotedDividend • Step-by-step • No experience needed</div>
+                </div>
+            </div>
+            <a href="https://www.youtube.com/watch?v=_7ibdhrr19w" target="_blank" rel="noopener" class="sticky-yt-cta">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Watch Free
+            </a>
+            <button class="sticky-yt-dismiss" id="dismiss-sticky" title="Dismiss">×</button>
+        </div>
+    </div>
+
     <!-- Promotion Modal -->
     <div id="promo-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
@@ -1256,6 +1387,17 @@ Disclaimer: DevotedDividend.com is for educational purposes only. Data and infor
             if (goBtn) {
                 goBtn.addEventListener('click', () => {
                     localStorage.setItem('seenTopDividendETFsPromo', 'true');
+                });
+            }
+
+            // Dismiss sticky banner
+            const dismissBtn = document.getElementById('dismiss-sticky');
+            const stickyBar = document.getElementById('sticky-yt-bar');
+            if (dismissBtn && stickyBar) {
+                dismissBtn.addEventListener('click', () => {
+                    stickyBar.style.transition = 'transform 0.4s ease';
+                    stickyBar.style.transform = 'translateY(100%)';
+                    setTimeout(() => stickyBar.style.display = 'none', 500);
                 });
             }
         });
