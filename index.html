@@ -866,6 +866,32 @@
             color: var(--accent-primary);
         }
     </style>
+    <style>
+        /* ===== Holdings email gate (MailerLite double opt-in) ===== */
+        .dd-blur { filter: blur(6px); user-select: none; pointer-events: none; display: inline-block; }
+        .dd-gate { position: relative; border-top: 1px solid var(--border-color); }
+        .dd-gate table { filter: blur(7px); opacity: .55; pointer-events: none; user-select: none; }
+        .dd-gate-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: min(560px, calc(100% - 24px));
+            background: linear-gradient(160deg, rgba(15,20,32,.97), rgba(10,14,26,.97)); border: 2px solid var(--accent-primary);
+            border-radius: 18px; padding: 28px 26px 22px; text-align: center; box-shadow: 0 0 40px rgba(0,255,136,.18), 0 20px 50px rgba(0,0,0,.5); }
+        .dd-gate-card .dd-lock { font-size: 2rem; line-height: 1; }
+        .dd-gate-card h3 { margin: 10px 0 6px; font-size: clamp(1.35rem, 3.6vw, 1.85rem); font-weight: 800; color: #fff; line-height: 1.2; }
+        .dd-gate-card h3 span { color: var(--accent-primary); }
+        .dd-gate-card p.dd-sub { margin: 0 0 16px; color: var(--text-secondary, #b8c2d6); font-size: .98rem; line-height: 1.5; }
+        .dd-gate-form { display: flex; gap: 8px; flex-wrap: wrap; }
+        .dd-gate-form input { flex: 1 1 220px; min-width: 0; padding: 13px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,.18);
+            background: rgba(255,255,255,.06); color: #fff; font-size: 1rem; font-family: inherit; }
+        .dd-gate-form input:focus { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+        .dd-gate-form button { flex: 0 0 auto; padding: 13px 20px; border: 0; border-radius: 10px; font-weight: 800; font-size: 1rem; cursor: pointer;
+            background: linear-gradient(135deg, var(--accent-primary), #00cc6e); color: #04120b; font-family: inherit; }
+        .dd-gate-form button[disabled] { opacity: .6; cursor: default; }
+        .dd-gate-err { color: #ff8095; font-size: .9rem; margin-top: 8px; min-height: 1em; }
+        .dd-gate-fine { color: var(--text-muted, #7d879c); font-size: .8rem; margin-top: 10px; }
+        .dd-gate-done h3 { color: var(--accent-primary); }
+        .dd-gate-done p { color: #dfe6f3; font-size: 1rem; line-height: 1.55; margin: 6px 0; }
+        .dd-preview-note { text-align: center; color: var(--text-muted, #7d879c); font-size: .85rem; padding: 10px 12px 2px; }
+        @media (max-width: 560px) { .dd-gate-form button { width: 100%; } .dd-gate-card { padding: 22px 16px 18px; } }
+    </style>
 </head>
 <body>
     <!-- Background Orbs -->
@@ -962,7 +988,7 @@
         </div>
 
         <!-- Holdings Section -->
-        <section class="holdings-section">
+        <section class="holdings-section" id="holdings">
             <div class="section-header">
                 <h2 class="section-title">Current Holdings</h2>
                 <div class="filters">
@@ -1192,6 +1218,10 @@ Disclaimer: DevotedDividend.com is for educational purposes only. Data and infor
                 tableWrapper.innerHTML = '<div class="loading"><p>No holdings data found</p></div>';
                 return;
             }
+
+            const ddLocked = !ddIsUnlocked();
+            const ddTotal = data.length;
+            if (ddLocked) data = ddPreviewRows(data, headers);
             
             let tableHTML = `
                 <table id="holdings-table">
@@ -1239,6 +1269,7 @@ Disclaimer: DevotedDividend.com is for educational purposes only. Data and infor
             `;
 
             tableWrapper.innerHTML = tableHTML;
+            if (ddLocked) ddRenderGate(tableWrapper, headers, ddTotal);
 
             const style = document.createElement('style');
             style.textContent = `
@@ -1251,6 +1282,105 @@ Disclaimer: DevotedDividend.com is for educational purposes only. Data and infor
             document.head.appendChild(style);
 
             setupFilters();
+        }
+
+        // ===== Holdings email gate =====
+        // First 10 holdings are shown with share counts, cost and income blurred. The rest unlock after the
+        // visitor confirms their email (MailerLite double opt-in). The confirmation thank-you page links back to
+        // devoteddividend.com/?portfolio=unlocked, which unlocks the table on this browser.
+        const DD_FORM = 'https://assets.mailerlite.com/jsonp/2512297/forms/200438469419337259/subscribe';
+        const DD_KEY = 'ddPortfolioUnlocked';
+        const DD_PREVIEW = 10;
+        const DD_SENSITIVE = /(# of shares|shares|avg cost|cost per share|yield on cost|yearly|monthly|annual income|estimated)/i;
+
+        function ddIsUnlocked() {
+            try {
+                const q = new URLSearchParams(location.search);
+                if (q.get('portfolio') === 'unlocked') {
+                    localStorage.setItem(DD_KEY, '1');
+                    q.delete('portfolio');
+                    const qs = q.toString();
+                    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + (location.hash || '#holdings'));
+                    if (typeof gtag === 'function') gtag('event', 'portfolio_unlocked');
+                    return true;
+                }
+                return localStorage.getItem(DD_KEY) === '1';
+            } catch (e) { return false; }
+        }
+
+        function ddFake(i) { const n = ['1,284', '$9.37', '$2,410.55', '8.42', '$318.20', '640', '$27.15', '$1,073.88']; return n[i % n.length]; }
+
+        function ddPreviewRows(data, headers) {
+            return data.slice(0, DD_PREVIEW).map((row, r) => {
+                const out = {};
+                headers.forEach((h, c) => {
+                    const sensitive = c > 1 && DD_SENSITIVE.test(h) && !/^dividend yield$/i.test(h.trim());
+                    out[h] = sensitive ? '<span class="dd-blur">' + ddFake(r + c) + '</span>' : row[h];
+                });
+                return out;
+            });
+        }
+
+        function ddRenderGate(wrapper, headers, total) {
+            const hidden = Math.max(total - DD_PREVIEW, 0);
+            let rows = '';
+            for (let r = 0; r < 9; r++) {
+                rows += '<tr>' + headers.map((h, c) => '<td>' + (c === 0 ? 'XXXX' : c === 1 ? 'Dividend Company Holdings' : ddFake(r + c)) + '</td>').join('') + '</tr>';
+            }
+            wrapper.insertAdjacentHTML('beforeend', `
+                <div class="dd-preview-note">Showing ${DD_PREVIEW} of ${total} holdings. Share counts, cost basis and income are hidden.</div>
+                <div class="dd-gate">
+                    <table aria-hidden="true"><tbody>${rows}</tbody></table>
+                    <div class="dd-gate-card" id="dd-gate-card">
+                        <div class="dd-lock">🔒</div>
+                        <h3>See my <span>entire portfolio</span>, 100% free</h3>
+                        <p class="dd-sub">Unlock all ${total} holdings${hidden ? ' (' + hidden + ' more)' : ''} with share counts, cost basis and the income each one pays me. Updated often.</p>
+                        <form class="dd-gate-form" id="dd-gate-form" novalidate>
+                            <input type="email" name="email" placeholder="Your email address" aria-label="Email address" autocomplete="email" required>
+                            <span style="position:absolute;left:-9999px" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></span>
+                            <button type="submit">Unlock My Holdings</button>
+                        </form>
+                        <div class="dd-gate-err" id="dd-gate-err" role="alert"></div>
+                        <div class="dd-gate-fine">Free. Confirm your email to unlock. Unsubscribe anytime.</div>
+                    </div>
+                </div>`);
+            const form = document.getElementById('dd-gate-form');
+            form.addEventListener('submit', ddSubmit);
+        }
+
+        const DD_DISPOSABLE = /@(mailinator|guerrillamail|10minutemail|tempmail|temp-mail|yopmail|trashmail|sharklasers|getnada|dispostable|maildrop|throwawaymail|fakeinbox|mintemail|mohmal|emailondeck|moakt|burnermail|spamgourmet)\./i;
+        const DD_TYPOS = { 'gmial.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gnail.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmaill.com': 'gmail.com', 'gamil.com': 'gmail.com',
+            'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'outlok.com': 'outlook.com', 'iclod.com': 'icloud.com', 'icloud.co': 'icloud.com' };
+
+        function ddSubmit(e) {
+            e.preventDefault();
+            const form = e.target, err = document.getElementById('dd-gate-err'), btn = form.querySelector('button');
+            err.textContent = '';
+            if (form.website.value) return;
+            const email = form.email.value.trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = 'Please enter a valid email address.'; return; }
+            if (DD_DISPOSABLE.test(email)) { err.textContent = 'Please use your real email address. Throwaway inboxes can\'t confirm.'; return; }
+            const dom = email.split('@')[1];
+            if (DD_TYPOS[dom]) { err.textContent = 'Did you mean ' + email.split('@')[0] + '@' + DD_TYPOS[dom] + '?'; form.email.value = email.split('@')[0] + '@' + DD_TYPOS[dom]; return; }
+            btn.disabled = true; btn.textContent = 'Sending...';
+            const fd = new FormData();
+            fd.append('fields[email]', email); fd.append('ml-submit', '1'); fd.append('anticsrf', 'true');
+            fetch(DD_FORM, { method: 'POST', body: fd, mode: 'cors' })
+                .then(r => r.json().catch(() => ({ success: r.ok })))
+                .catch(() => fetch(DD_FORM, { method: 'POST', body: fd, mode: 'no-cors' }).then(() => ({ success: true })))
+                .then(res => {
+                    if (!res || !res.success) throw new Error('fail');
+                    if (typeof gtag === 'function') gtag('event', 'generate_lead', { form: 'holdings_unlock' });
+                    document.getElementById('dd-gate-card').innerHTML = `
+                        <div class="dd-gate-done">
+                            <div class="dd-lock">📬</div>
+                            <h3>Check your inbox!</h3>
+                            <p>I just sent a confirmation email to <b>${email.replace(/</g, '')}</b>.</p>
+                            <p>Click <b>"Confirm and see my holdings"</b> in that email and my full portfolio unlocks instantly.</p>
+                            <div class="dd-gate-fine">Not there in a minute? Check your Promotions or Spam folder.</div>
+                        </div>`;
+                })
+                .catch(() => { btn.disabled = false; btn.textContent = 'Unlock My Holdings'; err.textContent = 'Something went wrong. Please try again.'; });
         }
 
         function updateStats(data) {
